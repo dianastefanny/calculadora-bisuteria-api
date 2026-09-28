@@ -15,14 +15,17 @@ class Calculation extends Model
     'packaging_id',
     'packaging_quantity',
     'production_time_minutes',
+    'quantity',
     'packaging_cost',
     'margin',
+    'discount_percentage',
     'materials_cost',
     'labor_cost',
     'benefits_cost',
     'indirect_cost',
     'total_cost',
     'sale_price',
+    'final_price',
     'valid_until',
 ];
 
@@ -32,12 +35,14 @@ class Calculation extends Model
         'packaging_quantity' => 'decimal:2',
         'packaging_cost' => 'decimal:2',
         'margin' => 'decimal:2',
+        'discount_percentage' => 'decimal:2',
         'materials_cost' => 'decimal:2',
         'labor_cost' => 'decimal:2',
         'benefits_cost' => 'decimal:2',
         'indirect_cost' => 'decimal:2',
         'total_cost' => 'decimal:2',
         'sale_price' => 'decimal:2',
+        'final_price' => 'decimal:2',
         'valid_until' => 'date',
     ];
 }

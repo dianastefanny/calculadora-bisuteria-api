@@ -38,15 +38,24 @@ class CalculationController extends Controller
         $validated = $request->validate([
             'design_id' => 'required|exists:designs,id',
             'production_time_minutes' => 'required|integer|min:1',
+            'quantity' => 'nullable|integer|min:1',
             'packaging_id' => 'nullable|exists:packagings,id',
             'packaging_quantity' => 'nullable|numeric|min:0',
             'margin' => 'nullable|numeric|min:0|max:99.99',
+            'discount_percentage' => 'nullable|numeric|min:0|max:99.99',
             'include_indirect_costs' => 'sometimes|boolean',
             'include_benefits' => 'sometimes|boolean',
         ]);
 
         $includeIndirectCosts = $validated['include_indirect_costs'] ?? true;
         $includeBenefits = $validated['include_benefits'] ?? true;
+
+        // Cuántas piezas iguales se cotizan de una vez (pedidos grandes). El
+        // tiempo, los materiales y el empaque siguen siendo "por pieza" —
+        // aquí se multiplican una sola vez por la cantidad, y de ahí en
+        // adelante el resto de la fórmula no cambia.
+        $quantity = $validated['quantity'] ?? 1;
+        $totalMinutes = $validated['production_time_minutes'] * $quantity;
 
         $user = $request->user();
 
@@ -56,11 +65,11 @@ class CalculationController extends Controller
         $configuration = $user->configuration;
         abort_if(! $configuration, 422, 'You must set up your configuration before calculating.');
 
-        // 1. Costo de materiales
-        $materialsCost = (float) $design->details()->sum('subtotal');
+        // 1. Costo de materiales (por pieza × cantidad)
+        $materialsCost = (float) $design->details()->sum('subtotal') * $quantity;
 
-        // 2. Costo de mano de obra
-        $laborCost = round($configuration->cost_per_minute * $validated['production_time_minutes'], 2);
+        // 2. Costo de mano de obra (con el tiempo ya multiplicado por la cantidad)
+        $laborCost = round($configuration->cost_per_minute * $totalMinutes, 2);
 
         // 3. Costo de prestaciones (solo si el usuario decide incluirlas)
         $totalBenefitsPercentage = $includeBenefits
@@ -70,7 +79,7 @@ class CalculationController extends Controller
         $benefitsCostPerMinute = $configuration->monthly_productive_minutes > 0
             ? $monthlyBenefitsCost / $configuration->monthly_productive_minutes
             : 0;
-        $benefitsCost = round($benefitsCostPerMinute * $validated['production_time_minutes'], 2);
+        $benefitsCost = round($benefitsCostPerMinute * $totalMinutes, 2);
 
         // 4. Costo indirecto (solo si el usuario decide incluirlo). Dos formas
         // de repartirlo, según si el usuario configuró cuántas piezas produce
@@ -87,15 +96,17 @@ class CalculationController extends Controller
             : 0.0;
 
         if ($configuration->monthly_production > 0) {
-            $indirectCost = round($totalMonthlyIndirect / $configuration->monthly_production, 2);
+            // Reparto por pieza: cada una carga la misma porción fija, así
+            // que el costo de todo el lote es esa porción × cantidad.
+            $indirectCost = round(($totalMonthlyIndirect / $configuration->monthly_production) * $quantity, 2);
         } else {
             $indirectCostPerMinute = $configuration->monthly_productive_minutes > 0
                 ? $totalMonthlyIndirect / $configuration->monthly_productive_minutes
                 : 0;
-            $indirectCost = round($indirectCostPerMinute * $validated['production_time_minutes'], 2);
+            $indirectCost = round($indirectCostPerMinute * $totalMinutes, 2);
         }
 
-        // 5. Empaque: viene del catálogo de packagings
+        // 5. Empaque: viene del catálogo de packagings (por pieza × cantidad)
         $packagingId = $validated['packaging_id'] ?? null;
         $packagingQuantity = (float) ($validated['packaging_quantity'] ?? 1);
         $packagingCost = 0;
@@ -104,29 +115,39 @@ class CalculationController extends Controller
             $packaging = Packaging::findOrFail($packagingId);
             abort_if($packaging->user_id !== $user->id, 403);
 
-            $packagingCost = round((float) $packaging->unit_cost * $packagingQuantity, 2);
+            $packagingCost = round((float) $packaging->unit_cost * $packagingQuantity * $quantity, 2);
         }
 
         // 6. Costo total
         $totalCost = round($materialsCost + $laborCost + $benefitsCost + $indirectCost + $packagingCost, 2);
 
-        // 7. Margen real y precio de venta
+        // 7. Margen real y precio de venta (de todo el lote, ya con la cantidad aplicada)
         $margin = (float) ($validated['margin'] ?? $configuration->default_margin);
         $salePrice = round($totalCost / (1 - $margin / 100), 2);
+
+        // 8. Descuento opcional (pedidos grandes). sale_price se conserva sin
+        // descuento; final_price es lo que realmente se le cobra al cliente.
+        $discountPercentage = $validated['discount_percentage'] ?? null;
+        $finalPrice = $discountPercentage
+            ? round($salePrice * (1 - $discountPercentage / 100), 2)
+            : $salePrice;
 
         $calculation = $user->calculations()->create([
             'design_id' => $design->id,
             'packaging_id' => $packagingId,
             'packaging_quantity' => $packagingQuantity,
             'production_time_minutes' => $validated['production_time_minutes'],
+            'quantity' => $quantity,
             'packaging_cost' => $packagingCost,
             'margin' => $margin,
+            'discount_percentage' => $discountPercentage,
             'materials_cost' => $materialsCost,
             'labor_cost' => $laborCost,
             'benefits_cost' => $benefitsCost,
             'indirect_cost' => $indirectCost,
             'total_cost' => $totalCost,
             'sale_price' => $salePrice,
+            'final_price' => $finalPrice,
             'valid_until' => Carbon::now()->addDays(5),
         ]);
 
