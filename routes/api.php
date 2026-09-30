@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/calculations', [CalculationController::class, 'store']);
     Route::get('/calculations/{calculation}', [CalculationController::class, 'show']);
     Route::delete('/calculations/{calculation}', [CalculationController::class, 'destroy']);
+    Route::post('/calculations/{calculation}/mark-sold', [CalculationController::class, 'markSold']);
 
     Route::get('/histories', [HistoryController::class, 'index']);
 

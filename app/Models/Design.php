@@ -15,6 +15,7 @@ class Design extends Model
         'user_id',
         'name',
         'description',
+        'reference',
         'is_active',
     ];
 

@@ -26,6 +26,7 @@ class DesignController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:150',
             'description' => 'nullable|string',
+            'reference' => 'nullable|string|max:15',
             'materials' => 'required|array|min:1',
             'materials.*.material_id' => 'required|exists:materials,id|distinct',
             'materials.*.quantity' => 'required|numeric|min:0.01',
@@ -35,6 +36,7 @@ class DesignController extends Controller
             $design = $request->user()->designs()->create([
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
+                'reference' => $validated['reference'] ?? null,
             ]);
 
             foreach ($validated['materials'] as $item) {
@@ -69,6 +71,7 @@ class DesignController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:150',
             'description' => 'nullable|string',
+            'reference' => 'nullable|string|max:15',
             'materials' => 'sometimes|array|min:1',
             'materials.*.material_id' => 'required_with:materials|exists:materials,id',
             'materials.*.quantity' => 'required_with:materials|numeric|min:0.01',
@@ -78,6 +81,7 @@ class DesignController extends Controller
             $design->update([
                 'name' => $validated['name'] ?? $design->name,
                 'description' => $validated['description'] ?? $design->description,
+                'reference' => $validated['reference'] ?? $design->reference,
             ]);
 
             if (isset($validated['materials'])) {

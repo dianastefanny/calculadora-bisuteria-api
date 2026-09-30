@@ -8,6 +8,7 @@ use App\Models\Design;
 use App\Models\Packaging;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CalculationController extends Controller
 {
@@ -106,7 +107,10 @@ class CalculationController extends Controller
             $indirectCost = round($indirectCostPerMinute * $totalMinutes, 2);
         }
 
-        // 5. Empaque: viene del catálogo de packagings (por pieza × cantidad)
+        // 5. Empaque: viene del catálogo de packagings. A diferencia de los
+        // materiales, NO se multiplica por la cantidad de piezas — cuando
+        // piden varias piezas iguales para la misma persona, normalmente
+        // van todas juntas en un solo empaque, no uno por pieza.
         $packagingId = $validated['packaging_id'] ?? null;
         $packagingQuantity = (float) ($validated['packaging_quantity'] ?? 1);
         $packagingCost = 0;
@@ -115,7 +119,7 @@ class CalculationController extends Controller
             $packaging = Packaging::findOrFail($packagingId);
             abort_if($packaging->user_id !== $user->id, 403);
 
-            $packagingCost = round((float) $packaging->unit_cost * $packagingQuantity * $quantity, 2);
+            $packagingCost = round((float) $packaging->unit_cost * $packagingQuantity, 2);
         }
 
         // 6. Costo total
@@ -168,5 +172,52 @@ class CalculationController extends Controller
         $calculation->delete();
 
         return response()->json(['message' => 'Calculation deleted successfully.']);
+    }
+
+    public function markSold(Request $request, Calculation $calculation)
+    {
+        abort_if($calculation->user_id !== $request->user()->id, 403);
+        abort_if($calculation->is_sold, 422, 'This calculation was already marked as sold.');
+
+        $calculation->load('design.details.material', 'packaging');
+
+        // Primero se revisa que haya suficiente stock de todo antes de
+        // descontar nada — si falta algo, no se descuenta ni un solo material.
+        $insufficient = [];
+
+        foreach ($calculation->design->details as $detail) {
+            $needed = $detail->quantity * $calculation->quantity;
+            if ($detail->material->stock < $needed) {
+                $insufficient[] = $detail->material->name;
+            }
+        }
+
+        // El empaque no se multiplica por la cantidad de piezas (ver store()):
+        // varias piezas del mismo pedido normalmente van en un solo empaque.
+        if ($calculation->packaging) {
+            if ($calculation->packaging->stock < $calculation->packaging_quantity) {
+                $insufficient[] = $calculation->packaging->name;
+            }
+        }
+
+        abort_if(
+            count($insufficient) > 0,
+            422,
+            'No hay suficiente stock de: '.implode(', ', $insufficient).'.'
+        );
+
+        DB::transaction(function () use ($calculation) {
+            foreach ($calculation->design->details as $detail) {
+                $detail->material->decrement('stock', $detail->quantity * $calculation->quantity);
+            }
+
+            if ($calculation->packaging) {
+                $calculation->packaging->decrement('stock', $calculation->packaging_quantity);
+            }
+
+            $calculation->update(['is_sold' => true]);
+        });
+
+        return response()->json($calculation->load(['design.details.material', 'packaging']));
     }
 }

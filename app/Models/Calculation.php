@@ -26,6 +26,7 @@ class Calculation extends Model
     'total_cost',
     'sale_price',
     'final_price',
+    'is_sold',
     'valid_until',
 ];
 
@@ -43,6 +44,7 @@ class Calculation extends Model
         'total_cost' => 'decimal:2',
         'sale_price' => 'decimal:2',
         'final_price' => 'decimal:2',
+        'is_sold' => 'boolean',
         'valid_until' => 'date',
     ];
 }
