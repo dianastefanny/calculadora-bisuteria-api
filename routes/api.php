@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('materials', MaterialController::class);
     Route::apiResource('material-categories', MaterialCategoryController::class);
     Route::apiResource('designs', DesignController::class);
+    Route::post('/designs/{design}/image', [DesignController::class, 'uploadImage']);
+    Route::delete('/designs/{design}/image', [DesignController::class, 'deleteImage']);
 
     Route::get('/configuration', [ConfigurationController::class, 'show']);
     Route::put('/configuration', [ConfigurationController::class, 'update']);

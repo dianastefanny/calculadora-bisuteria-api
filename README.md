@@ -6,7 +6,7 @@ API REST en Laravel para calcular el precio de venta de piezas de bisutería a p
 
 - PHP 8.2+ / Laravel 12
 - Laravel Sanctum (autenticación por token)
-- SQLite por defecto para desarrollo y tests
+- MySQL para desarrollo (SQLite en memoria para los tests)
 
 ## Módulos principales
 
@@ -21,13 +21,18 @@ API REST en Laravel para calcular el precio de venta de piezas de bisutería a p
 
 ## Instalación
 
+1. Crear en MySQL una base de datos vacía llamada `calculadora_bisuteria`.
+2. Copiar `.env.example` a `.env` y poner el usuario y la contraseña de MySQL en `DB_USERNAME` y `DB_PASSWORD`.
+3. Ejecutar:
+
 ```bash
 composer install
-cp .env.example .env
 php artisan key:generate
-touch database/database.sqlite
 php artisan migrate
+php artisan storage:link
 ```
+
+`storage:link` es necesario para que se vean las fotos de los diseños.
 
 O directamente:
 
@@ -38,8 +43,10 @@ composer run setup
 ## Levantar el servidor
 
 ```bash
-php artisan serve
+php artisan serve --host=0.0.0.0 --port=8000
 ```
+
+`--host=0.0.0.0` permite que la app en el celular se conecte a la API usando la IP de la PC en la red local.
 
 ## Tests
 

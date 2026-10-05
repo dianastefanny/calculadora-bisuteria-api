@@ -22,9 +22,3 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
-
-# Configuración local del editor, no es parte del proyecto
-.claude/
-.claudeignore
-CLAUDE.md
-AGENTS.md

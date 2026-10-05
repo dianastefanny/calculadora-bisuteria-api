@@ -11,17 +11,4 @@ enum MaterialUnit: string
     case Centimeter = 'centimeter';
     case Package = 'package';
     case Pair = 'pair';
-
-    public function label(): string
-    {
-        return match ($this) {
-            self::Unit => 'Unit',
-            self::Gram => 'Gram',
-            self::Kilogram => 'Kilogram',
-            self::Meter => 'Meter',
-            self::Centimeter => 'Centimeter',
-            self::Package => 'Package',
-            self::Pair => 'Pair',
-        };
-    }
 }

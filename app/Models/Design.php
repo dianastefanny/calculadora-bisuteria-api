@@ -16,12 +16,23 @@ class Design extends Model
         'name',
         'description',
         'reference',
+        'image_path',
         'is_active',
     ];
+
+    protected $hidden = ['image_path'];
+
+    protected $appends = ['image_url'];
 
     protected function casts(): array
     {
         return ['is_active' => 'boolean'];
+    }
+
+    // URL armada con el host de la petición, así funciona tanto en local como desde el celular
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image_path ? asset('storage/' . $this->image_path) : null;
     }
 
     public function user(): BelongsTo
@@ -32,17 +43,5 @@ class Design extends Model
     public function details(): HasMany
     {
         return $this->hasMany(DesignDetail::class);
-    }
-
-    public function materials()
-    {
-        return $this->belongsToMany(Material::class, 'design_details')
-            ->withPivot(['quantity', 'subtotal'])
-            ->withTimestamps();
-    }
-
-    public function getTotalMaterialsCostAttribute(): float
-    {
-        return (float) $this->details()->sum('subtotal');
     }
 }

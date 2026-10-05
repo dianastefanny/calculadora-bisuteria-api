@@ -7,6 +7,7 @@ use App\Models\Design;
 use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class DesignController extends Controller
 {
@@ -101,6 +102,40 @@ class DesignController extends Controller
                 }
             }
         });
+
+        return response()->json($design->load('details.material'));
+    }
+
+    public function uploadImage(Request $request, Design $design)
+    {
+        abort_if($design->user_id !== $request->user()->id, 403);
+
+        $request->validate([
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        $path = $request->file('image')->store("designs/{$design->user_id}", 'public');
+
+        // Si ya tenía foto, se borra el archivo anterior para no acumular
+        $oldPath = $design->image_path;
+
+        $design->update(['image_path' => $path]);
+
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        return response()->json($design->load('details.material'));
+    }
+
+    public function deleteImage(Request $request, Design $design)
+    {
+        abort_if($design->user_id !== $request->user()->id, 403);
+
+        if ($design->image_path) {
+            Storage::disk('public')->delete($design->image_path);
+            $design->update(['image_path' => null]);
+        }
 
         return response()->json($design->load('details.material'));
     }
