@@ -42,6 +42,7 @@ class AuthController extends Controller
             'Hilos y cordones',
             'Alambres',
             'Componentes para aretes',
+            'Broches',
             'Otros materiales',
         ];
 
