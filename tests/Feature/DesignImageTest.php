@@ -9,6 +9,11 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+/**
+ * Pruebas de la foto de los diseños sobre un disco falso (Storage::fake),
+ * sin escribir archivos reales: carga, reemplazo, eliminación, validación de
+ * tipo y tamaño, y control de acceso.
+ */
 class DesignImageTest extends TestCase
 {
     use RefreshDatabase;

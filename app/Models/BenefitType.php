@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Tipo de prestación con el que el usuario clasifica sus prestaciones.
+ */
 class BenefitType extends Model
 {
     use HasFactory, LogsHistory;

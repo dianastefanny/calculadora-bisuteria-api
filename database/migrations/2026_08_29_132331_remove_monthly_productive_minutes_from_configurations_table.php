@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Los minutos productivos dejan de guardarse: ahora se derivan de las
+     * horas laborales en el accessor Configuration::monthlyProductiveMinutes,
+     * lo que evita que ambos valores queden desincronizados.
+     */
     public function up(): void
     {
         Schema::table('configurations', function (Blueprint $table) {

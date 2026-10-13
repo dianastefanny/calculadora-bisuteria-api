@@ -6,6 +6,18 @@ use App\Traits\LogsHistory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Cotización de una pieza (o de un lote de piezas iguales) con el desglose
+ * completo de costos calculado en CalculationController::store.
+ *
+ * - sale_price: precio de venta según el margen, sin descuento.
+ * - final_price: precio que se cobra al cliente, ya con el descuento si lo hay.
+ * - valid_until: fin de la vigencia de la cotización (5 días).
+ * - is_sold: indica que la venta se registró y el inventario ya se descontó.
+ *
+ * Los costos se guardan como valores fijos para que la cotización no cambie
+ * si después se modifican los precios de los materiales o la configuración.
+ */
 class Calculation extends Model
 {
     use LogsHistory;

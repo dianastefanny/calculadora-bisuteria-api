@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Categoría con la que el usuario agrupa sus materiales.
+ */
 class MaterialCategory extends Model
 {
     use HasFactory, LogsHistory;

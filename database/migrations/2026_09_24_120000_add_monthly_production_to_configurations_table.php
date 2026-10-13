@@ -9,10 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('configurations', function (Blueprint $table) {
-            // Opcional: si el usuario sabe cuántas piezas produce al mes,
-            // los costos indirectos se reparten por pieza en vez de por
-            // minuto de mano de obra (ver CalculationController@store).
-            // Nula por defecto = seguir usando el reparto por minutos.
+            // Opcional. Con valor, los costos indirectos se reparten por pieza;
+            // en null (por defecto) se reparten por minuto de mano de obra
+            // (ver CalculationController::store).
             $table->decimal('monthly_production', 10, 2)->nullable()->after('monthly_working_hours');
         });
     }

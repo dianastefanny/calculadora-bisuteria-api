@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('password_reset_codes', function (Blueprint $table) {
-            // El código se guarda hasheado (Hash::make), no en texto plano —
-            // un hash de bcrypt ocupa unos 60 caracteres, no 6.
+            // El código se almacena con hash (Hash::make) y no en texto plano;
+            // un hash bcrypt ocupa unos 60 caracteres, no los 6 del código.
             $table->string('code', 255)->change();
         });
     }

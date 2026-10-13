@@ -9,10 +9,25 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Autenticación y gestión de la cuenta del usuario.
+ *
+ * La API es stateless: cada sesión se representa con un token personal de
+ * Sanctum que la app móvil envía en la cabecera Authorization.
+ */
 class AuthController extends Controller
 {
+    /**
+     * Registra una cuenta nueva y la deja lista para usar.
+     *
+     * Además de crear el usuario, siembra los catálogos por defecto que la
+     * app necesita desde el primer uso (configuración de costos, categorías
+     * de materiales, tipos de costo indirecto y prestaciones legales), de
+     * modo que el usuario pueda calcular sin tener que configurar nada antes.
+     */
     public function register(Request $request)
     {
+        // Nombre y apellido solo admiten letras (incluidas tildes y ñ) y espacios.
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'regex:/^[\pL\s]+$/u'],
             'last_name' => ['required', 'string', 'max:100', 'regex:/^[\pL\s]+$/u'],
@@ -29,10 +44,9 @@ class AuthController extends Controller
             'phone' => $validated['phone'] ?? null,
         ]);
 
-        // Crea la configuración por defecto automáticamente
+        // Configuración de costos con los valores por defecto de la migración.
         $user->configuration()->create([]);
 
-        // Crea el catálogo de categorías de materiales por defecto
         $defaultCategories = [
             'Cuentas y abalorios',
             'Piedras',
@@ -50,7 +64,6 @@ class AuthController extends Controller
             array_map(fn (string $name) => ['name' => $name], $defaultCategories)
         );
 
-        // Crea el catálogo de tipos de costo indirecto por defecto
         $defaultCostTypes = [
             'Arriendo',
             'Servicios públicos',
@@ -63,10 +76,9 @@ class AuthController extends Controller
             array_map(fn (string $name) => ['name' => $name], $defaultCostTypes)
         );
 
-        // Crea el catálogo de prestaciones legales por defecto (porcentajes
-        // de referencia aproximados, no editables por ahora — el usuario solo
-        // decide si incluirlas o no al calcular, desde el interruptor de
-        // Cálculos).
+        // Prestaciones legales colombianas con porcentajes de referencia sobre
+        // el salario. Cada una se crea con su propio tipo para que el usuario
+        // pueda editarlas, eliminarlas o agregar otras desde Configuraciones.
         $defaultBenefits = [
             'ARL' => 0.52,
             'Vacaciones' => 4.17,
@@ -93,6 +105,13 @@ class AuthController extends Controller
         ], 201);
     }
 
+    /**
+     * Valida las credenciales y emite un token de acceso nuevo.
+     *
+     * Las credenciales inválidas y las cuentas desactivadas se reportan como
+     * error de validación (422) sobre el campo email, para que la app pueda
+     * mostrarlos junto al formulario.
+     */
     public function login(Request $request)
     {
         $validated = $request->validate([
@@ -102,6 +121,8 @@ class AuthController extends Controller
 
         $user = User::where('email', $validated['email'])->first();
 
+        // Mismo mensaje si el correo no existe o la contraseña no coincide,
+        // para no revelar qué cuentas están registradas.
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
@@ -122,6 +143,10 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Revoca solo el token de la sesión actual; las sesiones abiertas en
+     * otros dispositivos siguen activas.
+     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -129,11 +154,19 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out successfully.']);
     }
 
+    /**
+     * Devuelve el perfil del usuario autenticado.
+     */
     public function me(Request $request)
     {
         return response()->json($request->user());
     }
 
+    /**
+     * Actualiza los datos personales de forma parcial: solo se validan y
+     * guardan los campos enviados ("sometimes"). El correo debe seguir siendo
+     * único, excluyendo el del propio usuario.
+     */
     public function updateProfile(Request $request)
     {
         $user = $request->user();
@@ -153,6 +186,10 @@ class AuthController extends Controller
         return response()->json($user);
     }
 
+    /**
+     * Cambia la contraseña previa verificación de la actual, para que una
+     * sesión abierta en un dispositivo ajeno no baste para tomar la cuenta.
+     */
     public function updatePassword(Request $request)
     {
         $validated = $request->validate([

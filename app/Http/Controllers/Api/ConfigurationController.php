@@ -5,6 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+/**
+ * Configuración de costos y preferencias del usuario: salario, horas
+ * productivas, producción mensual y margen por defecto (base del cálculo de
+ * costos), además de la moneda y el tema de la app.
+ *
+ * Cada usuario tiene una única configuración, creada al registrarse.
+ */
 class ConfigurationController extends Controller
 {
     public function show(Request $request)
@@ -12,6 +19,9 @@ class ConfigurationController extends Controller
         return response()->json($request->user()->configuration);
     }
 
+    /**
+     * Actualización parcial: solo se modifican los campos enviados.
+     */
     public function update(Request $request)
     {
         $validated = $request->validate([
@@ -20,8 +30,9 @@ class ConfigurationController extends Controller
             'theme' => 'sometimes|string|max:20',
             'monthly_salary' => 'sometimes|numeric|min:0',
             'monthly_working_hours' => 'sometimes|numeric|min:0',
-            // Opcional: si no se llena, los costos indirectos se siguen
-            // repartiendo por minuto de mano de obra (ver CalculationController).
+            // Admite null de forma explícita: sin producción mensual, los
+            // costos indirectos se reparten por minuto de mano de obra
+            // (ver CalculationController::store).
             'monthly_production' => 'sometimes|nullable|numeric|min:0',
         ]);
 

@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Tipo de costo indirecto (arriendo, servicios, transporte...) con el que el
+ * usuario clasifica sus costos indirectos.
+ */
 class CostType extends Model
 {
      use HasFactory, LogsHistory;

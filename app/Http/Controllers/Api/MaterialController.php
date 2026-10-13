@@ -9,6 +9,11 @@ use App\Models\Material;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 
+/**
+ * CRUD del inventario de materiales del usuario: costo por unidad de medida
+ * y stock disponible. El costo alimenta las recetas de los diseños y el
+ * stock se descuenta al marcar una cotización como vendida.
+ */
 class MaterialController extends Controller
 {
     public function index(Request $request)
@@ -24,6 +29,8 @@ class MaterialController extends Controller
 
     public function store(Request $request)
     {
+        // La categoría debe pertenecer al usuario y la unidad debe ser una de
+        // las definidas en el enum MaterialUnit.
         $validated = $request->validate([
             'material_category_id' => [
                 'required',
@@ -70,7 +77,8 @@ class MaterialController extends Controller
     public function destroy(Request $request, Material $material)
     {
         abort_if($material->user_id !== $request->user()->id, 403);
-        // Eliminación lógica según regla de negocio del documento
+        // Borrado lógico: el material se conserva porque puede formar parte
+        // de recetas de diseños y de cotizaciones del historial.
         $material->update(['is_active' => false]);
 
         return response()->json(['message' => 'Material deleted successfully.']);

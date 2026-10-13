@@ -6,6 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\CostType;
 use Illuminate\Http\Request;
 
+/**
+ * CRUD del catálogo de tipos de costo indirecto del usuario (arriendo,
+ * servicios, transporte...), con el que se clasifican los costos indirectos.
+ * La eliminación es lógica (is_active = false) y cada tipo solo es accesible
+ * por su dueño.
+ */
 class CostTypeController extends Controller
 {
     public function index(Request $request)

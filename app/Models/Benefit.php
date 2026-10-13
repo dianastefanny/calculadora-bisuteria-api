@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Prestación legal del usuario (salud, pensión, ARL, etc.), expresada como
+ * porcentaje del salario mensual. Solo las activas se suman en los cálculos.
+ */
 class Benefit extends Model
 {
     use HasFactory;

@@ -6,6 +6,10 @@ use App\Traits\LogsHistory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Empaque o presentación de entrega, con su costo unitario y stock. Su stock
+ * se descuenta al marcar una cotización como vendida.
+ */
 class Packaging extends Model
 {
     use LogsHistory;

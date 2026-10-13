@@ -6,6 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Packaging;
 use Illuminate\Http\Request;
 
+/**
+ * CRUD del catálogo de empaques del usuario. El costo unitario se suma al
+ * calcular una pieza y el stock se descuenta al marcar una cotización como
+ * vendida. La eliminación es lógica y cada empaque solo es accesible por su
+ * dueño.
+ */
 class PackagingController extends Controller
 {
     public function index(Request $request)

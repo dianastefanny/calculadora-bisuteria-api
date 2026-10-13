@@ -16,10 +16,19 @@ use App\Http\Controllers\Api\StatisticController;
 use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
+/*
+| Rutas de la API REST consumida por la app móvil (prefijo /api).
+|
+| Las rutas públicas tienen límite de peticiones por minuto (throttle:N,1)
+| para frenar intentos de fuerza bruta sobre credenciales y códigos. El resto
+| exige un token de Sanctum, y cada controlador verifica además que el
+| registro solicitado pertenezca al usuario autenticado.
+*/
+
+// Rutas públicas: registro, inicio de sesión y recuperación de contraseña.
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
-// Rutas públicas de recuperación de contraseña — SIN autenticación
 Route::post('/password/forgot', [PasswordResetController::class, 'forgotPassword'])->middleware('throttle:3,1');
 Route::post('/password/verify-code', [PasswordResetController::class, 'verifyCode'])->middleware('throttle:5,1');
 Route::post('/password/reset', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:5,1');
@@ -33,6 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('materials', MaterialController::class);
     Route::apiResource('material-categories', MaterialCategoryController::class);
     Route::apiResource('designs', DesignController::class);
+    // La foto va en rutas propias porque se envía como multipart/form-data,
+    // y PHP no procesa archivos en peticiones PUT.
     Route::post('/designs/{design}/image', [DesignController::class, 'uploadImage']);
     Route::delete('/designs/{design}/image', [DesignController::class, 'deleteImage']);
 
@@ -51,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/calculations', [CalculationController::class, 'store']);
     Route::get('/calculations/{calculation}', [CalculationController::class, 'show']);
     Route::delete('/calculations/{calculation}', [CalculationController::class, 'destroy']);
+    // Registra la venta y descuenta el inventario usado en la cotización.
     Route::post('/calculations/{calculation}/mark-sold', [CalculationController::class, 'markSold']);
 
     Route::get('/histories', [HistoryController::class, 'index']);

@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Gasto fijo mensual del negocio (arriendo, servicios, publicidad...). Los
+ * costos activos se reparten entre las piezas al calcular su costo.
+ */
 class IndirectCost extends Model
 {
     use HasFactory, LogsHistory;

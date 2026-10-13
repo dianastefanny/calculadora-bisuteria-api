@@ -8,6 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 
 
 /**
+ * Registra automáticamente en la bitácora del usuario (tabla histories) la
+ * creación, edición y eliminación de los modelos que usan este trait.
+ *
+ * Laravel ejecuta bootLogsHistory() al inicializar cada modelo que lo
+ * incluye, de modo que basta con agregar el trait para auditar un modelo,
+ * sin escribir código en los controladores.
+ *
  * @mixin Model
  */
 
@@ -28,6 +35,12 @@ trait LogsHistory
         });
     }
 
+    /**
+     * Guarda una entrada de historial para el modelo. El dueño se toma del
+     * propio registro (user_id) o, si no lo tiene, del usuario autenticado;
+     * sin ninguno de los dos (por ejemplo, en procesos de consola) no se
+     * registra nada.
+     */
     protected function recordHistory(string $action): void
     {
         $userId = $this->user_id ?? auth()->id();
@@ -45,6 +58,10 @@ trait LogsHistory
         ]);
     }
 
+    /**
+     * Texto legible de la entrada, con el nombre del registro o, si el modelo
+     * no tiene nombre, su id.
+     */
     protected function historyDescription(string $action): string
     {
         $name = $this->name ?? $this->id;

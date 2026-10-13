@@ -11,9 +11,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Recuperación de contraseña mediante un código de 6 dígitos enviado por
+ * correo, en tres pasos: solicitar el código, verificarlo y fijar la
+ * contraseña nueva.
+ *
+ * El código se guarda con hash (nunca en texto plano), vence a los 15
+ * minutos y es de un solo uso. Solicitar uno nuevo reemplaza al anterior.
+ */
 class PasswordResetController extends Controller
 {
-    // La app muestra estos mensajes tal cual al usuario, por eso van en español.
+    // Mensajes de validación en español: la app los muestra tal cual al usuario.
     private const MESSAGES = [
         'email.required' => 'Ingresa tu correo electrónico.',
         'email.email' => 'Ingresa un correo electrónico válido.',
@@ -24,6 +32,12 @@ class PasswordResetController extends Controller
         'password.confirmed' => 'Las contraseñas ingresadas no coinciden.',
     ];
 
+    /**
+     * Genera y envía un código de recuperación al correo indicado.
+     *
+     * La respuesta es la misma exista o no la cuenta, para no revelar qué
+     * correos están registrados.
+     */
     public function forgotPassword(Request $request)
     {
         $validated = $request->validate([
@@ -33,6 +47,8 @@ class PasswordResetController extends Controller
         $user = User::where('email', $validated['email'])->first();
 
         if ($user) {
+            // random_int usa una fuente criptográficamente segura; str_pad
+            // conserva los ceros a la izquierda (ej. "004821").
             $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
             DB::table('password_reset_codes')->updateOrInsert(
@@ -53,6 +69,11 @@ class PasswordResetController extends Controller
         ]);
     }
 
+    /**
+     * Comprueba que el código sea válido y esté vigente, sin consumirlo: la
+     * app lo usa para avanzar al paso de la contraseña nueva, que vuelve a
+     * validarlo antes de aplicar el cambio.
+     */
     public function verifyCode(Request $request)
     {
         $validated = $request->validate([
@@ -73,6 +94,10 @@ class PasswordResetController extends Controller
         return response()->json(['message' => 'Código verificado correctamente.']);
     }
 
+    /**
+     * Valida de nuevo el código, cambia la contraseña y elimina el código
+     * para que no pueda reutilizarse.
+     */
     public function resetPassword(Request $request)
     {
         $validated = $request->validate([

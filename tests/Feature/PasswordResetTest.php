@@ -9,11 +9,19 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
+/**
+ * Pruebas de la recuperación de contraseña. El envío de correo se intercepta
+ * con Mail::fake() para leer el código generado, y el paso del tiempo se
+ * simula con travel() para comprobar el vencimiento.
+ */
 class PasswordResetTest extends TestCase
 {
     use RefreshDatabase;
 
-    // Pide el código y devuelve el que llegó al correo (falso) del usuario.
+    /**
+     * Solicita un código de recuperación y devuelve el que se habría enviado
+     * al correo del usuario.
+     */
     private function requestCode(User $user): string
     {
         Mail::fake();

@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Material del inventario del usuario, con su costo por unidad de medida y
+ * el stock disponible. La unidad se valida contra el enum MaterialUnit.
+ */
 class Material extends Model
 {
     use HasFactory, LogsHistory;

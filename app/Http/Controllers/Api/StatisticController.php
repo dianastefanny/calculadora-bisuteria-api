@@ -5,8 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+/**
+ * Indicadores del resumen que muestra la pantalla de Inicio.
+ */
 class StatisticController extends Controller
 {
+    /**
+     * Cuenta solo los registros activos (los eliminados lógicamente no se
+     * incluyen) y la fecha del último cálculo, o null si aún no hay ninguno.
+     */
     public function summary(Request $request)
     {
         $user = $request->user();

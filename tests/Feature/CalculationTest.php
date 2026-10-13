@@ -13,6 +13,10 @@ use App\Models\BenefitType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Pruebas del cálculo de costos: verifica cada componente de la fórmula con
+ * valores controlados y que un usuario no pueda cotizar con diseños ajenos.
+ */
 class CalculationTest extends TestCase
 {
     use RefreshDatabase;

@@ -6,6 +6,13 @@ use App\Traits\LogsHistory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Configuración de costos y preferencias del usuario (una por cuenta).
+ *
+ * El salario mensual y las horas productivas determinan el costo por minuto
+ * de mano de obra, base de los cálculos de mano de obra, prestaciones y
+ * costos indirectos. La moneda y el tema guardan las preferencias de la app.
+ */
 class Configuration extends Model
 {
     use LogsHistory;

@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\MaterialCategory;
 use Illuminate\Http\Request;
 
+/**
+ * CRUD de las categorías con que el usuario clasifica sus materiales. Las
+ * categorías por defecto se crean al registrarse; la eliminación es lógica
+ * y cada categoría solo es accesible por su dueño.
+ */
 class MaterialCategoryController extends Controller
 {
     public function index(Request $request)

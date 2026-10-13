@@ -7,6 +7,14 @@ use Illuminate\Validation\Rule;
 use App\Models\IndirectCost;
 use Illuminate\Http\Request;
 
+/**
+ * CRUD de los costos indirectos mensuales del usuario (arriendo, servicios,
+ * transporte...). Su suma se reparte entre las piezas en
+ * CalculationController cuando el usuario decide incluirlos.
+ *
+ * El tipo de costo debe pertenecer al usuario, la eliminación es lógica y
+ * cada registro solo es accesible por su dueño.
+ */
 class IndirectCostController extends Controller
 {
     public function index(Request $request)

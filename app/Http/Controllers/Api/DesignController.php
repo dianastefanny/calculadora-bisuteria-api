@@ -9,6 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Diseños de piezas: la "receta" con los materiales y cantidades que usa
+ * cada pieza, más su foto opcional.
+ *
+ * El subtotal de cada material se congela al guardar el diseño (cantidad ×
+ * costo unitario vigente). Si después cambia el precio de un material, el
+ * diseño debe volver a guardarse para tomar el costo nuevo.
+ */
 class DesignController extends Controller
 {
     public function index(Request $request)
@@ -22,8 +30,13 @@ class DesignController extends Controller
         return response()->json($designs);
     }
 
+    /**
+     * Crea el diseño con su receta en una sola transacción: si algún
+     * material no existe o no pertenece al usuario, no se guarda nada.
+     */
     public function store(Request $request)
     {
+        // "distinct" impide repetir un mismo material dentro de la receta.
         $validated = $request->validate([
             'name' => 'required|string|max:150',
             'description' => 'nullable|string',
@@ -65,6 +78,11 @@ class DesignController extends Controller
         return response()->json($design->load('details.material'));
     }
 
+    /**
+     * Actualiza los datos del diseño y, si se envía la lista de materiales,
+     * reemplaza la receta completa recalculando los subtotales con los
+     * costos actuales. Todo ocurre en una transacción.
+     */
     public function update(Request $request, Design $design)
     {
         abort_if($design->user_id !== $request->user()->id, 403);
@@ -86,7 +104,6 @@ class DesignController extends Controller
             ]);
 
             if (isset($validated['materials'])) {
-                // Reemplaza toda la receta con la nueva lista
                 $design->details()->delete();
 
                 foreach ($validated['materials'] as $item) {
@@ -106,6 +123,13 @@ class DesignController extends Controller
         return response()->json($design->load('details.material'));
     }
 
+    /**
+     * Sube o reemplaza la foto del diseño (JPG, PNG o WebP de hasta 2 MB).
+     *
+     * El archivo se guarda en el disco público, en una carpeta por usuario.
+     * El archivo anterior se elimina solo después de registrar el nuevo, para
+     * que el diseño nunca quede apuntando a una foto inexistente.
+     */
     public function uploadImage(Request $request, Design $design)
     {
         abort_if($design->user_id !== $request->user()->id, 403);
@@ -116,7 +140,6 @@ class DesignController extends Controller
 
         $path = $request->file('image')->store("designs/{$design->user_id}", 'public');
 
-        // Si ya tenía foto, se borra el archivo anterior para no acumular
         $oldPath = $design->image_path;
 
         $design->update(['image_path' => $path]);
@@ -128,6 +151,9 @@ class DesignController extends Controller
         return response()->json($design->load('details.material'));
     }
 
+    /**
+     * Quita la foto del diseño y elimina el archivo del disco.
+     */
     public function deleteImage(Request $request, Design $design)
     {
         abort_if($design->user_id !== $request->user()->id, 403);
@@ -140,6 +166,10 @@ class DesignController extends Controller
         return response()->json($design->load('details.material'));
     }
 
+    /**
+     * Borrado lógico: el diseño deja de listarse, pero se conserva para que
+     * las cotizaciones del historial que lo usan sigan mostrando sus datos.
+     */
     public function destroy(Request $request, Design $design)
     {
         abort_if($design->user_id !== $request->user()->id, 403);

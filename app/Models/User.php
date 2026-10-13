@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * Usuario de la aplicación. Es dueño de todos los catálogos y registros
+ * (materiales, diseños, costos, cotizaciones...), y cada consulta de la API
+ * se limita a los datos de la cuenta autenticada.
+ *
+ * Usa tokens personales de Sanctum para autenticar a la app móvil.
+ */
 class User extends Authenticatable
 {
    use HasApiTokens, HasFactory, Notifiable;

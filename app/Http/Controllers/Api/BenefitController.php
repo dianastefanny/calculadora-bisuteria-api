@@ -7,6 +7,13 @@ use App\Models\Benefit;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 
+/**
+ * CRUD de las prestaciones legales del usuario (salud, pensión, ARL, etc.).
+ *
+ * La suma de los porcentajes activos se aplica sobre el salario mensual en
+ * CalculationController cuando el usuario decide incluir prestaciones.
+ * Cada registro solo es accesible por su dueño.
+ */
 class BenefitController extends Controller
 {
     public function index(Request $request)
@@ -22,6 +29,8 @@ class BenefitController extends Controller
 
     public function store(Request $request)
     {
+        // El tipo debe existir y pertenecer al usuario: impide asociar la
+        // prestación a un tipo de otra cuenta.
         $validated = $request->validate([
             'benefit_type_id' => [
                 'required',
@@ -61,6 +70,10 @@ class BenefitController extends Controller
         return response()->json($benefit->load('benefitType'));
     }
 
+    /**
+     * Borrado lógico: la prestación se desactiva y deja de sumarse en los
+     * cálculos nuevos, sin perder el registro.
+     */
     public function destroy(Request $request, Benefit $benefit)
     {
         abort_if($benefit->user_id !== $request->user()->id, 403);

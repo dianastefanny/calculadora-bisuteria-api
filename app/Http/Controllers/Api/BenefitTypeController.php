@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\BenefitType;
 use Illuminate\Http\Request;
 
+/**
+ * CRUD del catálogo de tipos de prestación del usuario, con el que se
+ * clasifican las prestaciones. La eliminación es lógica (is_active = false)
+ * y cada tipo solo es accesible por su dueño.
+ */
 class BenefitTypeController extends Controller
 {
     public function index(Request $request)
